@@ -1,0 +1,29 @@
+# 실행 결과와 로컬 산출물은 소스 저장소에서 제외한다.
+**/results/
+**/probe-results/
+**/artifacts/
+**/build/
+**/.gradle/
+**/.kotlin/
+**/bin/
+**/__pycache__/
+*.py[cod]
+*.class
+*.log
+*.ko
+*.o
+*.tar.gz
+*.jar
+!Kafka-benchmark/gradle/wrapper/gradle-wrapper.jar
+.env
+.env.*
+
+# 이 통합 저장소에는 실행 소스와 테스트·빌드 설정만 올린다.
+*.md
+*.MD
+**/docs/
+
+# 과거 결과 보고서는 제외하고 실행 방법 문서만 보관한다.
+/kafka_python_result/docs/FIO-EXT4-RESULT-20261013.md
+/kafka_python_result/docs/FIO-보고서.md
+/kafka_python_result/docs/KAFKA-ONLY-실행기록-20261015.md
