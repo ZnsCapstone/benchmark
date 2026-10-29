@@ -85,22 +85,6 @@ Python 코드는 환경 구성과 반복 실행을 담당한다.
 
 구체적인 device path, Kafka 경로와 DM 설정은 `kafka_python_result/src/settings.py`에서 확인한다.
 
-## 빌드 및 테스트
-
-Java 부하기를 빌드하고 테스트한다.
-
-```bash
-cd Kafka-benchmark
-./gradlew clean test jar
-```
-
-Python runner의 회귀 테스트를 실행한다.
-
-```bash
-cd kafka_python_result
-python3 -m unittest discover -s tests
-```
-
 
 ## 실험 재현 방법
 
