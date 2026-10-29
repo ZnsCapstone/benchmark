@@ -553,7 +553,10 @@ public class KafkaBenchmark {
     static void configureProducerIntegrity(Properties props) {
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "false");
         props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "1");
-        props.put(ProducerConfig.RETRIES_CONFIG, "0");
+        // 진단 실행에서만 명시적으로 허용한다. 순서 보장을 위해 in-flight=1 유지.
+        int retries = Integer.getInteger("benchmark.producerRetries", 0);
+        if (retries < 0) throw new IllegalArgumentException("producer retries must be nonnegative");
+        props.put(ProducerConfig.RETRIES_CONFIG, Integer.toString(retries));
     }
 
     /**
@@ -846,6 +849,7 @@ public class KafkaBenchmark {
                             globalOutstanding.decrementAndGet();
                             if (measured) measuredOutstanding.decrementAndGet();
                             if (exception != null) {
+                                ProducerFailureDiagnostics.record(id, "callback", exception);
                                 sendErrors.incrementAndGet();
                                 globalFailures.incrementAndGet();
                                 if (measured) measuredFailures.incrementAndGet();
@@ -875,6 +879,7 @@ public class KafkaBenchmark {
                             }
                         });
                     } catch (Exception e) {
+                        ProducerFailureDiagnostics.record(id, "send", e);
                         sendErrors.incrementAndGet();
                         globalFailures.incrementAndGet();
                         if (permitAcquired) outstandingLimiter.release();
@@ -904,6 +909,14 @@ public class KafkaBenchmark {
                         try { producer.close(Duration.ZERO); } catch (Exception ignore) {}
                     } else {
                         try { producer.flush(); } catch (Exception ignore) {}
+                        if (Integer.getInteger("benchmark.producerRetries", 0) > 0) {
+                            producer.metrics().forEach((name, metric) -> {
+                                if (name.group().equals("producer-metrics") &&
+                                        (name.name().equals("record-retry-total") || name.name().equals("record-error-total")))
+                                    System.err.printf("[ProducerRecovery] producer=%d metric=%s value=%s%n",
+                                            id, name.name(), metric.metricValue());
+                            });
+                        }
                         try { producer.close(Duration.ofSeconds(30)); } catch (Exception ignore) {}
                     }
                 }

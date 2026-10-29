@@ -177,6 +177,9 @@ def configure_result_paths(cfg, run_dir: Path) -> None:
     cfg.CSV_DIR = str(run_dir / "csv")
     cfg.ENV_DIR = str(run_dir / "env")
     cfg.EXPERIMENT_KRAFT_CONFIG = str(run_dir / "env" / "server-femu.properties")
+    if os.environ.get("BENCH_LONG_GC") == "1":
+        import long_gc
+        long_gc.install(cfg)
 
 
 def capture_kernel_window(run_dir: Path, since_epoch: int) -> None:

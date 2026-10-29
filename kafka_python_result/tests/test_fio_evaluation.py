@@ -6,10 +6,37 @@ import os
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from fio_evaluation import fio_command, parse_fio, femu_delta, dm_metrics, os_metrics, prepare_storage
+from fio_evaluation import fio_command, parse_fio, femu_delta, dm_metrics, os_metrics, prepare_storage, wal_diagnostics
 
 
 class FioEvaluationTests(unittest.TestCase):
+    def test_wal_stage_means_and_missing_counters(self):
+        delta={}
+        for stage in ('ready','worker','dispatch','submit','complete'):
+            delta['wal_diag_'+stage+'_count']=2
+            delta['wal_diag_'+stage+'_ns']=6000000
+        result=wal_diagnostics(delta)
+        for key in ('ready_to_worker_mean_ms','worker_wall_mean_ms','dispatch_wait_mean_ms',
+                    'submit_wait_mean_ms','batch_complete_mean_ms'):
+            self.assertEqual(result[key],3)
+            self.assertIsNone(wal_diagnostics({})[key])
+
+    def test_cpu_steal_is_reported_separately(self):
+        rows = [{'epoch_us': 1000000, 'cpu_ticks': 'cpu 0 0 0 0 0 0 0 0',
+                 'per_cpu_ticks': {'cpu0': [0]*8}},
+                {'epoch_us': 2000000, 'cpu_ticks': 'cpu 10 0 0 80 0 0 0 10',
+                 'per_cpu_ticks': {'cpu0': [10,0,0,80,0,0,0,10]}}]
+        value = os_metrics(rows)
+        self.assertEqual(value['cpu_steal_pct'], 10)
+        self.assertEqual(value['per_cpu_steal_pct']['cpu0'], 10)
+
+    def test_same_block_size_is_supported_for_sequential_and_random(self):
+        for rw in ('write', 'randwrite', 'read', 'randread'):
+            cmd = fio_command('/mnt/data', 1024**3, rw, '4k', 8, 20, 120, '/tmp/out')
+            self.assertIn('--bs=4k', cmd)
+            self.assertIn(f'--rw={rw}', cmd)
+        self.assertIn('--bs=1M', fio_command('/mnt/data', 1024**3, 'write', '1M', 8, 20, 120, '/tmp/out'))
+
     def test_prepare_loads_metrics_module_and_checks_status(self):
         with tempfile.TemporaryDirectory() as folder:
             module = Path(folder) / 'dm-zns-base.ko'

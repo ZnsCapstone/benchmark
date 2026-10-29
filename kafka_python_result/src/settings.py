@@ -40,6 +40,10 @@ DM_MODULE_PATH = os.environ.get(
     "DM_ZNS_MODULE_PATH", os.path.expanduser("~/dm-zns-base/src/dm-zns-base.ko")
 )
 DM_METRICS = os.environ.get("BENCH_DM_METRICS", "0") == "1"
+WAL_DIAGNOSTIC_DELAY_MS = (
+    int(os.environ["BENCH_WAL_DELAY_MS"])
+    if "BENCH_WAL_DELAY_MS" in os.environ else None
+)
 METADATA_ZONES = 6
 GC_RESERVE_ZONES = int(os.environ.get("DM_GC_RESERVED_ZONES", "2"))
 GC_LOW_WATERMARK = int(os.environ.get("DM_GC_LOW_WATERMARK", "4"))
@@ -68,7 +72,7 @@ SEPARATE_METADATA_DIR = True
 METADATA_DIR = "/var/lib/kafka-meta"
 
 JAVA_BENCH_JAR = os.path.expanduser(
-    "~/Kafka-benchmark/build/libs/kafka-benchmark-1.0.jar"
+    os.environ.get("BENCH_JAVA_JAR", "~/Kafka-benchmark/build/libs/kafka-benchmark-1.0.jar")
 )
 JAVA_BENCH_CMD = (
     "java -Xms1G -Xmx2G "

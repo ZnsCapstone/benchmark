@@ -223,6 +223,9 @@ def create_dm_target():
             module_args.append(f"gc_diag_budget={diag_budget}")
     else:
         raise RuntimeError(f"Unsupported DM implementation: {cfg.DM_IMPLEMENTATION}")
+    if getattr(cfg, "WAL_DIAGNOSTIC_DELAY_MS", None) is not None:
+        module_args.extend(["wal_timing_enabled=1",
+                            f"wal_batch_delay_ms={cfg.WAL_DIAGNOSTIC_DELAY_MS}"])
     result = subprocess.run(
         module_args,
         capture_output=True,
