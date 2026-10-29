@@ -22,6 +22,7 @@
 *.md
 *.MD
 **/docs/
+!README.md
 
 # 과거 결과 보고서는 제외하고 실행 방법 문서만 보관한다.
 /kafka_python_result/docs/FIO-EXT4-RESULT-20261013.md
